@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Solar System Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* ── Variables ── */
+    :root {
+      --solar:   #f59e0b;
+      --solar-dk:#d97706;
+      --navy:    #1e3a5f;
+      --navy-lt: #2a5080;
+      --green:   #16a34a;
+      --green-lt:#dcfce7;
+      --red:     #dc2626;
+      --red-lt:  #fee2e2;
+      --bg:      #f0f4f8;
+      --card:    #ffffff;
+      --border:  #dce3eb;
+      --text:    #1c2b3a;
+      --muted:   #5a6e82;
+      --radius:  10px;
+      --shadow:  0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--navy);
+      color: #fff;
+      padding: 18px 32px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      border-bottom: 4px solid var(--solar);
+    }
+    .logo {
+      width: 46px; height: 46px;
+      background: var(--solar);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; flex-shrink: 0;
+    }
+    header h1 { font-size: 20px; font-weight: 700; }
+    header p  { font-size: 12px; color: #a9c0db; margin-top: 2px; }
+
+    /* ── Main Layout ── */
+    .page {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 24px;
+      padding: 24px 32px;
+      max-width: 1400px;
+      margin: 0 auto;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .page { grid-template-columns: 1fr; padding: 16px; }
+    }
+
+    /* ── Input Panel ── */
+    .input-panel {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .panel-title {
+      background: var(--navy);
+      color: #fff;
+      padding: 14px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .panel-body { padding: 20px; }
+
+    .form-group { margin-bottom: 18px; }
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 7px;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--text);
+      background: var(--bg);
+      transition: border-color 0.2s;
+      outline: none;
+    }
+    .form-group input:focus,
+    .form-group select:focus { border-color: var(--solar); background: #fff; }
+    .form-hint {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .btn-calculate {
+      width: 100%;
+      padding: 13px;
+      background: var(--solar);
+      color: var(--navy);
+      border: none;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.3px;
+      transition: background 0.2s, transform 0.1s;
+      margin-top: 4px;
+    }
+    .btn-calculate:hover  { background: var(--solar-dk); }
+    .btn-calculate:active { transform: scale(0.98); }
+
+    .disclaimer {
+      margin-top: 16px;
+      padding: 12px;
+      background: #fffbeb;
+      border-radius: 7px;
+      border-left: 3px solid var(--solar);
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    /* ── Dashboard Panel ── */
+    .dashboard-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .placeholder {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 2px dashed var(--border);
+      padding: 60px 32px;
+      text-align: center;
+      color: var(--muted);
+    }
+    .placeholder .ph-icon { font-size: 48px; margin-bottom: 12px; }
+    .placeholder p { font-size: 14px; }
+
+    #results { display: none; }
+
+    /* ROI Banner */
+    .roi-banner {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-lt) 100%);
+      color: #fff;
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      box-shadow: var(--shadow);
+    }
+    .roi-banner .roi-label { font-size: 13px; color: #a9c0db; margin-bottom: 4px; }
+    .roi-banner .roi-value { font-size: 28px; font-weight: 700; color: var(--solar); }
+    .roi-banner .roi-sub   { font-size: 12px; color: #a9c0db; margin-top: 2px; }
+    .roi-icon { font-size: 40px; opacity: 0.8; }
+
+    /* Result Cards Grid */
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+    @media (max-width: 1100px) { .result-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 600px)  { .result-grid { grid-template-columns: 1fr; } }
+
+    .result-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 16px 14px 14px;
+      border-top: 4px solid var(--solar);
+      box-shadow: var(--shadow);
+      border-bottom: 1px solid var(--border);
+    }
+    .result-card.green-card { border-top-color: var(--green); }
+    .result-card.red-card   { border-top-color: var(--red); }
+
+    .rc-icon  { font-size: 20px; margin-bottom: 6px; }
+    .rc-value {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--navy);
+      line-height: 1.1;
+    }
+    .rc-unit  { font-size: 12px; font-weight: 500; color: var(--muted); }
+    .rc-label { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+    /* Chart Card */
+    .chart-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .chart-card .panel-title { background: var(--navy-lt); }
+    .chart-body { padding: 20px; }
+    .chart-body canvas { max-height: 260px; }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header>
+  <div class="logo">☀️</div>
+  <div>
+    <h1>Solar System Calculator</h1>
+    <p>Pengiraan sistem solar kediaman on-grid — Malaysia</p>
+  </div>
+</header>
+
+<!-- ── Page ── -->
+<div class="page">
+
+  <!-- ════ INPUT PANEL ════ -->
+  <div class="input-panel">
+    <div class="panel-title">⚡ Maklumat Pemasangan</div>
+    <div class="panel-body">
+
+      <div class="form-group">
+        <label for="monthlyKwh">Penggunaan Elektrik Bulanan (kWh)</label>
+        <input type="number" id="monthlyKwh" placeholder="cth. 500" min="1" />
+        <div class="form-hint">Lihat bil TNB anda — bahagian "Jumlah Unit Digunakan"</div>
+      </div>
+
+      <div class="form-group">
+        <label for="tariffRate">Kadar Tarif TNB (RM / kWh)</label>
+        <input type="number" id="tariffRate" placeholder="cth. 0.435" step="0.001" min="0.01" value="0.435" />
+        <div class="form-hint">Kadar purata domestik: RM 0.435. Tarif penuh (>600 kWh): RM 0.571</div>
+      </div>
+
+      <div class="form-group">
+        <label for="budget">Bajet Pemasangan (RM)</label>
+        <input type="number" id="budget" placeholder="cth. 20000" min="1000" step="500" />
+        <div class="form-hint">Anggaran pasaran: RM 4,000–5,000 per kW dipasang</div>
+      </div>
+
+      <div class="form-group">
+        <label for="location">Lokasi</label>
+        <select id="location">
+          <option value="5.0">Kuala Lumpur / Selangor (5.0 jam)</option>
+          <option value="5.2">Johor Bahru (5.2 jam)</option>
+          <option value="4.8">Pulau Pinang (4.8 jam)</option>
+          <option value="5.5">Kota Kinabalu, Sabah (5.5 jam)</option>
+          <option value="4.6">Kuching, Sarawak (4.6 jam)</option>
+          <option value="5.1">Kuantan, Pahang (5.1 jam)</option>
+          <option value="5.3">Alor Setar, Kedah (5.3 jam)</option>
+          <option value="4.9">Ipoh, Perak (4.9 jam)</option>
+        </select>
+        <div class="form-hint">Digunakan untuk mengira waktu cahaya matahari puncak (peak sun hours)</div>
+      </div>
+
+      <button class="btn-calculate" onclick="runCalculation()">☀️ Kira Sistem Solar Saya</button>
+
+      <div class="disclaimer">
+        ⚠️ <strong>Nota:</strong> Pengiraan ini adalah anggaran sahaja berdasarkan panel 550W standard.
+        Kos sebenar bergantung kepada lokasi, jenis panel, dan kontraktor. Sila dapatkan sebut harga rasmi.
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ DASHBOARD PANEL ════ -->
+  <div class="dashboard-panel">
+
+    <!-- Placeholder -->
+    <div class="placeholder" id="placeholder">
+      <div class="ph-icon">🌤️</div>
+      <p><strong>Masukkan maklumat anda</strong> di sebelah kiri<br>dan klik <em>"Kira Sistem Solar Saya"</em> untuk melihat keputusan.</p>
+    </div>
+
+    <!-- Results (hidden until calculated) -->
+    <div id="results">
+
+      <!-- ROI Banner -->
+      <div class="roi-banner">
+        <div>
+          <div class="roi-label">Penjimatan Anggaran Sepanjang 25 Tahun</div>
+          <div class="roi-value" id="roi25yr">RM 0</div>
+          <div class="roi-sub">Selepas menolak kos pemasangan</div>
+        </div>
+        <div class="roi-icon">💰</div>
+      </div>
+
+      <!-- Result Cards -->
+      <div class="result-grid">
+        <div class="result-card">
+          <div class="rc-icon">🔋</div>
+          <div class="rc-value" id="rc-size">—</div>
+          <div class="rc-unit">kW</div>
+          <div class="rc-label">Saiz Sistem Disyorkan</div>
+        </div>
+        <div class="result-card">
+          <div class="rc-icon">🟦</div>
+          <div class="rc-value" id="rc-panels">—</div>
+          <div class="rc-unit">panel</div>
+          <div class="rc-label">Bilangan Panel (550W)</div>
+        </div>
+        <div class="result-card">
+          <div class="rc-icon">⚙️</div>
+          <div class="rc-value" id="rc-inverter">—</div>
+          <div class="rc-unit">kW</div>
+          <div class="rc-label">Saiz Inverter</div>
+        </div>
+        <div class="result-card red-card">
+          <div class="rc-icon">💸</div>
+          <div class="rc-value" id="rc-cost">—</div>
+          <div class="rc-unit">RM</div>
+          <div class="rc-label">Anggaran Kos Pemasangan</div>
+        </div>
+        <div class="result-card green-card">
+          <div class="rc-icon">📉</div>
+          <div class="rc-value" id="rc-monthly">—</div>
+          <div class="rc-unit">RM / bulan</div>
+          <div class="rc-label">Penjimatan Bil Bulanan</div>
+        </div>
+        <div class="result-card green-card">
+          <div class="rc-icon">📊</div>
+          <div class="rc-value" id="rc-annual">—</div>
+          <div class="rc-unit">RM / tahun</div>
+          <div class="rc-label">Penjimatan Tahunan</div>
+        </div>
+        <div class="result-card">
+          <div class="rc-icon">⏳</div>
+          <div class="rc-value" id="rc-payback">—</div>
+          <div class="rc-unit">tahun</div>
+          <div class="rc-label">Tempoh Bayar Balik (ROI)</div>
+        </div>
+        <div class="result-card green-card">
+          <div class="rc-icon">🌿</div>
+          <div class="rc-value" id="rc-co2">—</div>
+          <div class="rc-unit">kg / tahun</div>
+          <div class="rc-label">Offset CO₂ Karbon</div>
+        </div>
+      </div>
+
+      <!-- Bill Comparison Chart -->
+      <div class="chart-card">
+        <div class="panel-title">📈 Perbandingan Bil Bulanan: Sebelum vs Selepas Solar</div>
+        <div class="chart-body">
+          <canvas id="billChart"></canvas>
+        </div>
+      </div>
+
+    </div><!-- /#results -->
+  </div><!-- /.dashboard-panel -->
+
+</div><!-- /.page -->
+
+<script>
+  /* ════════════════════════════════════════
+     Helpers
+  ════════════════════════════════════════ */
+  function formatRM(v) {
+    return 'RM ' + v.toLocaleString('ms-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function fNum(v, dec = 1) {
+    return parseFloat(v.toFixed(dec)).toLocaleString('ms-MY');
+  }
+
+  let chartInstance = null;
+
+  /* ════════════════════════════════════════
+     Calculation Engine
+  ════════════════════════════════════════ */
+  function runCalculation() {
+    const monthlyKwh   = parseFloat(document.getElementById('monthlyKwh').value);
+    const tariffRate   = parseFloat(document.getElementById('tariffRate').value);
+    const budget       = parseFloat(document.getElementById('budget').value);
+    const peakSunHours = parseFloat(document.getElementById('location').value);
+
+    // Validation
+    if (!monthlyKwh || monthlyKwh <= 0) {
+      alert('Sila masukkan penggunaan elektrik bulanan yang sah (kWh).');
+      return;
+    }
+    if (!tariffRate || tariffRate <= 0) {
+      alert('Sila masukkan kadar tarif TNB yang sah.');
+      return;
+    }
+    if (!budget || budget <= 0) {
+      alert('Sila masukkan bajet pemasangan yang sah.');
+      return;
+    }
+
+    // Core calculations
+    const dailyKwh      = monthlyKwh / 30;
+    const systemSizeKw  = dailyKwh / peakSunHours;
+    const numPanels     = Math.ceil(systemSizeKw * 1000 / 550);
+    const inverterSize  = Math.ceil(systemSizeKw);
+    const estimatedCost = systemSizeKw * 4500;
+
+    const monthlyGenKwh  = systemSizeKw * peakSunHours * 30;
+    const monthlySavings = Math.min(monthlyGenKwh, monthlyKwh) * tariffRate;
+    const annualSavings  = monthlySavings * 12;
+    const paybackYears   = annualSavings > 0 ? estimatedCost / annualSavings : 0;
+    const roi25yr        = (annualSavings * 25) - estimatedCost;
+    const co2Saved       = monthlyGenKwh * 12 * 0.585;
+
+    const billBefore = monthlyKwh * tariffRate;
+    const billAfter  = Math.max(0, billBefore - monthlySavings);
+
+    const results = {
+      systemSizeKw, numPanels, inverterSize, estimatedCost,
+      monthlySavings, annualSavings, paybackYears, roi25yr,
+      co2Saved, billBefore, billAfter
+    };
+
+    renderDashboard(results);
+    renderChart(results);
+
+    // Show results, hide placeholder
+    document.getElementById('placeholder').style.display = 'none';
+    document.getElementById('results').style.display = 'block';
+
+    // Scroll into view on mobile
+    document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  /* ════════════════════════════════════════
+     Render Dashboard Cards
+  ════════════════════════════════════════ */
+  function renderDashboard(r) {
+    document.getElementById('roi25yr').textContent     = formatRM(r.roi25yr);
+    document.getElementById('rc-size').textContent     = fNum(r.systemSizeKw, 2);
+    document.getElementById('rc-panels').textContent   = r.numPanels;
+    document.getElementById('rc-inverter').textContent = r.inverterSize;
+    document.getElementById('rc-cost').textContent     = fNum(r.estimatedCost, 0);
+    document.getElementById('rc-monthly').textContent  = fNum(r.monthlySavings, 2);
+    document.getElementById('rc-annual').textContent   = fNum(r.annualSavings, 2);
+    document.getElementById('rc-payback').textContent  = fNum(r.paybackYears, 1);
+    document.getElementById('rc-co2').textContent      = fNum(r.co2Saved, 0);
+  }
+
+  /* ════════════════════════════════════════
+     Render Chart
+  ════════════════════════════════════════ */
+  function renderChart(r) {
+    const months = ['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogs','Sep','Okt','Nov','Dis'];
+    const before = months.map(() => parseFloat(r.billBefore.toFixed(2)));
+    const after  = months.map(() => parseFloat(r.billAfter.toFixed(2)));
+
+    if (chartInstance) {
+      chartInstance.destroy();
+    }
+
+    const ctx = document.getElementById('billChart').getContext('2d');
+    chartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: months,
+        datasets: [
+          {
+            label: 'Sebelum Solar (RM)',
+            data: before,
+            backgroundColor: 'rgba(220, 38, 38, 0.75)',
+            borderColor: '#dc2626',
+            borderWidth: 1,
+            borderRadius: 4
+          },
+          {
+            label: 'Selepas Solar (RM)',
+            data: after,
+            backgroundColor: 'rgba(22, 163, 74, 0.75)',
+            borderColor: '#16a34a',
+            borderWidth: 1,
+            borderRadius: 4
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: { position: 'top' },
+          tooltip: {
+            callbacks: {
+              label: ctx => ' ' + formatRM(ctx.raw)
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: v => 'RM ' + v.toLocaleString()
+            }
+          }
+        }
+      }
+    });
+  }
+</script>
+
+</body>
+</html>
